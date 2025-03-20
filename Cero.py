@@ -1,45 +1,51 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-# from sklearn.model_selection import train_test_split, GridSearchCV
-# from sklearn.preprocessing import StandardScaler
-# from sklearn.neighbors import KNeighborsClassifier
-# from sklearn.pipeline import Pipeline
-# from sklearn.metrics import classification_report, confusion_matrix
-# from imblearn.over_sampling import SMOTE
-# from collections import Counter
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.neighbors import NearestNeighbors
 
-def leerdatos():
-    datos = pd.read_csv('Data.csv')
+def load_data(path):
+    return pd.read_csv(path)
 
-    muypopular = datos[(datos["TOTAL_ARTICULOS"] >= 20) | (datos["TOTAL_CLIENTES"] >= 10)]
-    # popular = datos[(datos["TOTAL_ARTICULOS"] < 20 ) & (datos["TOTAL_ARTICULOS"] >= 10) | (datos["TOTAL_CLIENTES"] < 10) & (datos["TOTAL_CLIENTES"] >= 5) ]
-    pocopopular = datos[(datos["TOTAL_ARTICULOS"] < 10) & (datos["TOTAL_CLIENTES"] < 5)]
-    # Datos que no estan en muyPopular ni en pocoPopular
-    popular = datos[~datos.index.isin(muypopular.index) & ~datos.index.isin(pocopopular.index)]
+def normalize(data):
+    sub_set = ["TOTAL_ARTICULOS", "TOTAL_CLIENTES", "LINEA_ARTICULO_ID"]
+    sub_set = MinMaxScaler().fit_transform(data[sub_set])
+    return data
 
-    total = len(muypopular) + len(popular) + len(pocopopular)
-    if total > len(datos):
-        print("Error 3 categories are greater than total dataset")
-        print(total)
-        print(len(datos))
-        return -1
-    else:
-        print(muypopular)
-        print(popular)
-        print(pocopopular)
-    return muypopular, popular, pocopopular
+def train_knn(data):
+    features = ["TOTAL_ARTICULOS", "TOTAL_CLIENTES", "LINEA_ARTICULO_ID"]
+    knn = NearestNeighbors(n_neighbors=5, metric='euclidean')
+    knn.fit(data[features])
+    return knn
 
-def dibujargrafica(muypopular, popular, pocopopular):
-    plt.scatter(muypopular["TOTAL_ARTICULOS"], muypopular["TOTAL_CLIENTES"], marker="^", s=150, color="blue", label="Muy Popular")
-    plt.scatter(popular["TOTAL_ARTICULOS"], popular["TOTAL_CLIENTES"], marker="s", s=150, color="green", label="Popular")
-    plt.scatter(pocopopular["TOTAL_ARTICULOS"], pocopopular["TOTAL_CLIENTES"], marker="v", s=150, color="red", label="Poco Popular")
-    plt.xlabel("TOTAL_ARTICULOS")
-    plt.ylabel("TOTAL_CLIENTES")
-    plt.show()
+
+def recommend(knn, data, article_id):
+    if article_id not in data["CLAVE_ARTICULO"].values:
+        print(f"Artículo {article_id} no encontrado en los datos.")
+        return
+
+    # Obtener características del artículo de referencia
+    article_features = data[data["CLAVE_ARTICULO"] == article_id][
+        ["TOTAL_ARTICULOS", "TOTAL_CLIENTES", "LINEA_ARTICULO_ID"]].values
+
+    # Buscar los artículos más cercanos
+    distances, indices = knn.kneighbors(article_features)
+
+    print(f"Artículos similares a {article_id}:")
+    for i, index in enumerate(indices[0]):
+        similar_article = data.iloc[index]["CLAVE_ARTICULO"]
+        if similar_article != article_id:
+            print(f"{i + 1}. Artículo {similar_article} (Distancia: {distances[0][i]:.4f})")
+
 
 def main():
-    muypopular, popular, pocopopular = leerdatos()
-    dibujargrafica(muypopular, popular, pocopopular)
+    data = load_data("Data.csv")
+    data = normalize(data)
+
+    knn = train_knn(data)
+
+    for i in range(10):
+        CLAVE_ARICULO = int(input("Ingrese CLAVE_ARICULO:"))
+        # Prueba recomendando artículos similares a uno dado (por ejemplo, el artículo con ID 12345)
+        recommend(knn, data, CLAVE_ARICULO)
 
 main()
-
