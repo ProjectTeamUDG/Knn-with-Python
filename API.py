@@ -1,36 +1,44 @@
 from fastapi import FastAPI
+from openpyxl.xml.functions import tostring
 from pydantic import BaseModel
 import joblib
-import pandas as pd
-import uvicorn
+from pprint import pprint
+
 
 # Cargar modelo y columnas
 model = joblib.load("Modelo_KNN5.pkl")
-columns = joblib.load("Columnas.pkl")
+modelData = joblib.load("Data.pkl")
 
 app = FastAPI()
 
-class Modelo_KNN(BaseModel):
+class ModeloKNN(BaseModel):
     CLAVE_ARTICULO: int
-    cantidad: int
-    precio: float
 
 @app.post("/recomendar")
-def recomendar(data: Modelo_KNN):
+def recomendar(data: ModeloKNN):
     article_id = data.CLAVE_ARTICULO
+    if article_id not in modelData["CLAVE_ARTICULO"].values:
+        print(f"Artículo {article_id} no encontrado en los datos.")
+        return
 
-    # Obtener características del artículo de referencia
-    article_features = pd.DataFrame({
-    "TOTAL_ARTICULOS": [data.cantidad],
-    "TOTAL_CLIENTES": [1],
-    "LINEA_ARTICULO_ID": [1],
-    "PRECIO": [data.precio]
-    })
+        # Obtener características del artículo de referencia
+    article_features = modelData[modelData["CLAVE_ARTICULO"] == article_id][
+        ["TOTAL_ARTICULOS", "TOTAL_CLIENTES", "LINEA_ARTICULO_ID", "PRECIO"]]
 
     # Buscar los artículos más cercanos
     distances, indices = model.kneighbors(article_features)
 
+    print(f"Artículos similares a {article_id}:")
+
+    recommendations = []
+    for i, index in enumerate(indices[0]):
+        similar_article = modelData.iloc[index]["CLAVE_ARTICULO"]
+        if i > 0:
+            recommendations.append(similar_article)
+            print(f"{i}. Artículo {similar_article} (Distancia: {distances[0][i]:.4f})")
+
     return {
-        "recomendaciones": indices[0].tolist(),
+        "recomendaciones":recommendations,
         "distancias": distances[0].tolist()
     }
+
