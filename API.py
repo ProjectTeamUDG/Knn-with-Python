@@ -1,9 +1,6 @@
 from fastapi import FastAPI
-from openpyxl.xml.functions import tostring
 from pydantic import BaseModel
 import joblib
-from pprint import pprint
-
 
 # Cargar modelo y columnas
 model = joblib.load("Modelo_KNN5.pkl")
