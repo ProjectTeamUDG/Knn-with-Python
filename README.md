@@ -1,32 +1,112 @@
-🧠 Recomendador KNN para Artículos
-Este proyecto implementa un sistema de recomendación de artículos basado en el algoritmo KNN (K-Nearest Neighbors), y expone una API REST con FastAPI para consumir las recomendaciones.
 
-🔧 Estructura del Proyecto
-Gen_ModelKNN.py: Script que entrena el modelo KNN con un conjunto de datos y lo guarda en disco.
+# Sistema de Recomendación con KNN (k-Nearest Neighbors)
 
-API.py: Script que levanta una API con FastAPI y expone un endpoint para recibir una clave de artículo y devolver recomendaciones.
+Este proyecto implementa un sistema de recomendación basado en el algoritmo **KNN**, construido con Python y expuesto a través de una **API con FastAPI**. Se diseñó para recomendar artículos similares en función de características como cantidad, precio, línea y comportamiento histórico.
 
-modelo_knn.pkl: Archivo generado tras entrenar el modelo, usado por la API.
-Data.pkl: guardar el DataFrame original es clave para poder interpretar la salida del modelo;El modelo guarda solo los vectores numéricos.
-datos.csv: Dataset base para el entrenamiento.
+---
 
-🚀 1. Entrenamiento del Modelo
-El modelo se entrena usando scikit-learn con un dataset de artículos. Se utiliza el algoritmo NearestNeighbors para encontrar los artículos más cercanos en función de sus características (por ejemplo, ID, categorías, o embeddings).
+## 🧠 Lógica General
 
-Resultado: Se guarda el modelo entrenado en un archivo .pkl que luego es cargado por la API.
+- Se cargan datos tabulados de artículos.
+- Se normalizan las características relevantes usando `MinMaxScaler`.
+- Se entrena un modelo `NearestNeighbors` con los datos normalizados.
+- Se expone un endpoint `/recomendar` que devuelve artículos similares a uno dado.
+- La respuesta incluye los IDs recomendados y sus distancias.
 
-🌐 2. API REST con FastAPI
-La API expone un endpoint /recomendar que recibe un artículo (por su CLAVE_ARTICULO) y devuelve una lista de artículos similares recomendados por el modelo entrenado.
+---
 
-Método: POST
-Ruta: /recomendar
--------------------------------------------
-json
+## 🛠️ Estructura de Archivos
+
+### `Gen_ModelKNN.py`
+
+- Contiene la clase `RecommendKnn`.
+- Funcionalidades:
+  - `load_data(...)`: Carga archivos CSV o Excel.
+  - `normalize_data(...)`: Escala características numéricas.
+  - `index_data(...)`: Ajusta el modelo KNN.
+  - `recommend(...)`: Imprime por consola artículos similares.
+  - `export_model(...)`: Guarda modelo, datos y scaler (`*.pkl`).
+
+- Datos utilizados:
+  - `"CLAVE_ARTICULO"` (no se normaliza)
+  - `"TOTAL_ARTICULOS"`, `"TOTAL_CLIENTES"`, `"LINEA_ARTICULO_ID"`, `"PRECIO"`
+
+- Modelos serializados:
+  - `Modelo_KNN5.pkl`
+  - `Data.pkl` (ya normalizado)
+  - `Scaler.pkl` (solo necesario si se usan nuevos artículos)
+
+---
+
+### `API.py`
+
+- Exposición vía FastAPI
+- Endpoint: `POST /recomendar`
+- Entrada esperada (JSON):
+```json
 {
-  "CLAVE_ARTICULO": 123
+  "clave_articulo": 123456
 }
--------------------------------------------
-json
+```
+
+- Funcionamiento:
+  - Verifica si el artículo existe en los datos.
+  - Extrae sus características ya normalizadas.
+  - Calcula vecinos más cercanos.
+  - Retorna artículos similares distintos al solicitado.
+
+- Respuesta:
+```json
 {
-  "recomendaciones": [456, 789, 321]
+  "recomendaciones": [100001, 100045, 100078],
+  "distancias": [0.12, 0.23, 0.29]
 }
+```
+
+---
+
+## ⚠️ Consideraciones
+
+- **El modelo requiere que los datos estén normalizados**, por eso en la API no se vuelve a aplicar el `scaler`.
+- **Los resultados serán incorrectos si escalás dos veces** los datos o si usás características fuera del rango original.
+- Para artículos **nuevos no presentes en el dataset**, se debe:
+  - Guardar el `scaler.pkl` al entrenar.
+  - En la API: recibir las características y escalar con ese mismo `scaler`.
+
+---
+
+## ✅ Recomendaciones
+
+- Validar entrada en la API con `HTTPException`.
+- Usar `.values` en lugar de `.transform()` cuando los datos ya están normalizados.
+- Hacer logging o impresión de artículos, distancias y entradas para debugging.
+
+---
+
+## 📦 Requisitos
+
+- Python 3.8+
+- pandas
+- scikit-learn
+- fastapi
+- uvicorn
+
+---
+
+## 🚀 Ejecución
+
+### 1. Entrenamiento del modelo
+
+```bash
+python Gen_ModelKNN.py
+```
+
+### 2. Levantar la API
+
+```bash
+uvicorn API:app --reload
+```
+
+---
+
+Desarrollado con fines de exploración y aprendizaje. ¡Que tus recomendaciones siempre sean relevantes!

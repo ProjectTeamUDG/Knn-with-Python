@@ -1,38 +1,45 @@
 from fastapi import FastAPI
+from fastapi import HTTPException
 from pydantic import BaseModel
 import joblib
 
 # Cargar modelo y columnas
-model = joblib.load("Modelo_KNN5.pkl")
-modelData = joblib.load("Data.pkl")
+modelName = "Modelo_KNN5"
+dataName = "Data"
+#Scaler comentado, pues ya esta escalada la informacion
+#scalerName = "Scaler"
+model = joblib.load(modelName+".pkl")
+data = joblib.load(dataName+".pkl")
+#scaler = joblib.load(scalerName+".pkl")
 
 app = FastAPI()
 
 class ModeloKNN(BaseModel):
-    CLAVE_ARTICULO: int
+    clave_articulo: int
 
 @app.post("/recomendar")
-def recomendar(data: ModeloKNN):
-    article_id = data.CLAVE_ARTICULO
-    if article_id not in modelData["CLAVE_ARTICULO"].values:
-        print(f"Artículo {article_id} no encontrado en los datos.")
-        return
+def recomendar(container: ModeloKNN):
+    if container.clave_articulo not in data["CLAVE_ARTICULO"].values:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Artículo {container.clave_articulo} no encontrado en los datos."
+        )
 
-        # Obtener características del artículo de referencia
-    article_features = modelData[modelData["CLAVE_ARTICULO"] == article_id][
-        ["TOTAL_ARTICULOS", "TOTAL_CLIENTES", "LINEA_ARTICULO_ID", "PRECIO"]]
+    # Obtener características del artículo de referencia
+    feature_cols = ["TOTAL_ARTICULOS", "TOTAL_CLIENTES", "LINEA_ARTICULO_ID", "PRECIO"]
+
+    article_row = data[data["CLAVE_ARTICULO"] == container.clave_articulo]
+    article_features = article_row[feature_cols].values
 
     # Buscar los artículos más cercanos
     distances, indices = model.kneighbors(article_features)
 
-    print(f"Artículos similares a {article_id}:")
-
+    #Lista de articulos a recomendar
     recommendations = []
     for i, index in enumerate(indices[0]):
-        similar_article = modelData.iloc[index]["CLAVE_ARTICULO"]
-        if i > 0:
+        similar_article = data.iloc[index]["CLAVE_ARTICULO"]
+        if i > 0:#Excluyendo el mismo articulo
             recommendations.append(similar_article)
-            print(f"{i}. Artículo {similar_article} (Distancia: {distances[0][i]:.4f})")
 
     return {
         "recomendaciones":recommendations,
