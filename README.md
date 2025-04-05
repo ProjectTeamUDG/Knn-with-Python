@@ -1,61 +1,52 @@
 
-# Sistema de Recomendación con KNN (k-Nearest Neighbors)
+# 🧠 Sistema de Recomendación con KNN (k-Nearest Neighbors)
 
-Este proyecto implementa un sistema de recomendación basado en el algoritmo **KNN**, construido con Python y expuesto a través de una **API con FastAPI**. Se diseñó para recomendar artículos similares en función de características como cantidad, precio, línea y comportamiento histórico.
-
----
-
-## 🧠 Lógica General
-
-- Se cargan datos tabulados de artículos.
-- Se normalizan las características relevantes usando `MinMaxScaler`.
-- Se entrena un modelo `NearestNeighbors` con los datos normalizados.
-- Se expone un endpoint `/recomendar` que devuelve artículos similares a uno dado.
-- La respuesta incluye los IDs recomendados y sus distancias.
+Este proyecto implementa un sistema de recomendación basado en el algoritmo KNN, entrenado con datos normalizados y expuesto a través de una API con FastAPI. Está diseñado para recomendar artículos similares a uno dado, usando propiedades como cantidad de ventas, número de clientes, línea del artículo y precio.
 
 ---
 
-## 🛠️ Estructura de Archivos
+## 📁 Estructura de Archivos
 
 ### `Gen_ModelKNN.py`
 
-- Contiene la clase `RecommendKnn`.
-- Funcionalidades:
-  - `load_data(...)`: Carga archivos CSV o Excel.
-  - `normalize_data(...)`: Escala características numéricas.
-  - `index_data(...)`: Ajusta el modelo KNN.
-  - `recommend(...)`: Imprime por consola artículos similares.
-  - `export_model(...)`: Guarda modelo, datos y scaler (`*.pkl`).
+Contiene la clase `RecommendKnn`, encargada de:
 
-- Datos utilizados:
-  - `"CLAVE_ARTICULO"` (no se normaliza)
-  - `"TOTAL_ARTICULOS"`, `"TOTAL_CLIENTES"`, `"LINEA_ARTICULO_ID"`, `"PRECIO"`
+- Cargar los datos desde Excel o CSV.
+- Normalizar las columnas numéricas (`MinMaxScaler`).
+- Entrenar el modelo `NearestNeighbors`.
+- Exportar el modelo (`.pkl`) y los datos normalizados.
 
-- Modelos serializados:
-  - `Modelo_KNN5.pkl`
-  - `Data.pkl` (ya normalizado)
-  - `Scaler.pkl` (solo necesario si se usan nuevos artículos)
+**Métodos principales:**
+
+- `normalize_data(raw_data)`: Escala columnas seleccionadas (`features[1:]`).
+- `index_data()`: Ajusta el modelo con los datos escalados.
+- `recommend(article_id)`: Muestra artículos similares por consola.
+- `export_model()`: Guarda modelo y datos escalados.
+- `load_data(...)`: Función externa para cargar datos desde archivo.
 
 ---
 
 ### `API.py`
 
-- Exposición vía FastAPI
-- Endpoint: `POST /recomendar`
-- Entrada esperada (JSON):
+Contiene la clase `Model` y la API FastAPI con un solo endpoint:
+
+**Clase `Model`:**
+- Carga el modelo y los datos normalizados desde archivos `.pkl`.
+- Método `get_recommendation(article_id)`:
+  - Verifica existencia de datos y del modelo.
+  - Obtiene las características del artículo buscado.
+  - Calcula vecinos usando `.kneighbors()`.
+  - Devuelve lista de artículos similares y sus distancias.
+
+**Endpoint disponible:**
+- `POST /recomendar`
 ```json
 {
-  "clave_articulo": 123456
+  "clave_articulo": 100002
 }
 ```
 
-- Funcionamiento:
-  - Verifica si el artículo existe en los datos.
-  - Extrae sus características ya normalizadas.
-  - Calcula vecinos más cercanos.
-  - Retorna artículos similares distintos al solicitado.
-
-- Respuesta:
+**Respuesta esperada:**
 ```json
 {
   "recomendaciones": [100001, 100045, 100078],
@@ -67,41 +58,21 @@ Este proyecto implementa un sistema de recomendación basado en el algoritmo **K
 
 ## ⚠️ Consideraciones
 
-- **El modelo requiere que los datos estén normalizados**, por eso en la API no se vuelve a aplicar el `scaler`.
-- **Los resultados serán incorrectos si escalás dos veces** los datos o si usás características fuera del rango original.
-- Para artículos **nuevos no presentes en el dataset**, se debe:
-  - Guardar el `scaler.pkl` al entrenar.
-  - En la API: recibir las características y escalar con ese mismo `scaler`.
+- Los datos exportados (`Data.pkl`) **ya están normalizados**, por lo tanto el `scaler` no se usa en la API.
+- Si se desean recomendar artículos nuevos no presentes en el dataset original, sí se deberá exportar y aplicar el `Scaler`.
+- La API maneja errores con códigos HTTP apropiados (`404`, `500`) usando `HTTPException`.
 
 ---
 
-## ✅ Recomendaciones
+## 🧪 Flujo de Ejecución
 
-- Validar entrada en la API con `HTTPException`.
-- Usar `.values` en lugar de `.transform()` cuando los datos ya están normalizados.
-- Hacer logging o impresión de artículos, distancias y entradas para debugging.
-
----
-
-## 📦 Requisitos
-
-- Python 3.8+
-- pandas
-- scikit-learn
-- fastapi
-- uvicorn
-
----
-
-## 🚀 Ejecución
-
-### 1. Entrenamiento del modelo
+### Entrenamiento
 
 ```bash
 python Gen_ModelKNN.py
 ```
 
-### 2. Levantar la API
+### Ejecución de la API
 
 ```bash
 uvicorn API:app --reload
@@ -109,4 +80,22 @@ uvicorn API:app --reload
 
 ---
 
-Desarrollado con fines de exploración y aprendizaje. ¡Que tus recomendaciones siempre sean relevantes!
+## ✅ Requisitos
+
+- Python 3.8+
+- pandas
+- scikit-learn
+- fastapi
+- uvicorn
+- joblib
+
+---
+
+## 🧠 Observaciones Finales
+
+- La clase `RecommendKnn` encapsula correctamente todo el flujo: cargar → normalizar → entrenar → exportar.
+- El modelo está siendo entrenado con datos consistentes, y el API devuelve recomendaciones reales ajustadas.
+- Se ha eliminado el doble escalado, y ahora cada módulo cumple su rol sin ambigüedad.
+
+Este README resume el flujo completo desde el entrenamiento del modelo hasta la exposición vía API. Perfecto para producción ligera o pruebas de concepto.
+
