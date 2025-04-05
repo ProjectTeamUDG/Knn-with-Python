@@ -8,7 +8,7 @@
 	},
 	"item": [
 		{
-			"name": "Recomendar-100002",
+			"name": "Articulo 100002",
 			"event": [
 				{
 					"listen": "test",
@@ -50,7 +50,93 @@
 			"response": []
 		},
 		{
-			"name": "Recomendar-CORRECTOR",
+			"name": "Parametros Incorrectos",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Updated test to fix the TypeError",
+							"pm.test(\"Successful POST request, expected bad response\", function () {",
+							"    pm.expect(pm.response.code).to.equal(422);",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"clave_articulo\": \"Wrong\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{localhost}}/recomendar",
+					"host": [
+						"{{localhost}}"
+					],
+					"path": [
+						"recomendar"
+					]
+				},
+				"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+			},
+			"response": []
+		},
+		{
+			"name": "Articulo no existente",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Updated test to fix the TypeError",
+							"pm.test(\"Successful POST request, expected bad response\", function () {",
+							"    pm.expect(pm.response.code).to.equal(404);",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"clave_articulo\": 0\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{localhost}}/recomendar",
+					"host": [
+						"{{localhost}}"
+					],
+					"path": [
+						"recomendar"
+					]
+				},
+				"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+			},
+			"response": []
+		},
+		{
+			"name": "Corrector",
 			"event": [
 				{
 					"listen": "test",
@@ -92,19 +178,27 @@
 			"response": []
 		},
 		{
-			"name": "Recomendar-Mouse",
+			"name": "Mouse inexistente en datos",
 			"event": [
 				{
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.test(\"Successful POST request\", function () {",
-							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"// Updated test to fix the TypeError",
+							"pm.test(\"Successful POST request, expected bad response\", function () {",
+							"    pm.expect(pm.response.code).to.equal(404);",
 							"});",
 							""
 						],
 						"type": "text/javascript",
 						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"packages": {},
+						"type": "text/javascript"
 					}
 				}
 			],
@@ -134,7 +228,7 @@
 			"response": []
 		},
 		{
-			"name": "Recomendar-Mouse inalambrico",
+			"name": "Mouse",
 			"event": [
 				{
 					"listen": "test",
