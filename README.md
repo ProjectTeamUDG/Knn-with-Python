@@ -99,3 +99,84 @@ uvicorn API:app --reload
 
 Este README resume el flujo completo desde el entrenamiento del modelo hasta la exposición vía API. Perfecto para producción ligera o pruebas de concepto.
 
+
+
+---
+
+## 🚀 Instrucciones detalladas
+
+### 1. Instalar dependencias
+
+Desde la carpeta `KnnModel/SubSpace/`, ejecutar:
+
+```bash
+ScriptInstaller.bat
+```
+
+Esto creará un entorno virtual `venv/` e instalará automáticamente las dependencias desde `requirements.txt`.
+
+---
+
+### 2. Entrenar el modelo
+
+Desde `KnnModel/`, ejecutar:
+
+```bash
+python Gen_ModelKNN.py
+```
+
+Esto:
+
+- Carga los datos desde `Data.xlsx` o `Data.csv`.
+- Normaliza las columnas seleccionadas con `MinMaxScaler`.
+- Entrena el modelo KNN con `NearestNeighbors`.
+- Exporta `Modelo_KNN5.pkl` y `Data.pkl` dentro de `SubSpace/`.
+
+---
+
+### 3. Levantar la API
+
+Desde `KnnModel/SubSpace/`:
+
+#### En CMD:
+```cmd
+venv\Scripts\activate
+uvicorn API:app --reload
+```
+
+#### En PowerShell:
+```powershell
+.\venv\Scripts\Activate.ps1
+uvicorn API:app --reload
+```
+
+---
+
+### 4. Probar el endpoint
+
+#### URL:
+```
+http://127.0.0.1:8000/recomendar
+```
+
+#### JSON de prueba:
+```json
+{
+  "clave_articulo": 100002
+}
+```
+
+Incluye una colección de pruebas `BasicTest.json` para usar en Postman con varios casos:
+
+- Artículo válido
+- Artículo inexistente
+- Parámetros inválidos
+
+---
+
+## 📁 Notas técnicas adicionales
+
+- El modelo se entrena una sola vez y se exporta en `.pkl`.
+- La API no necesita reentrenar ni reescalar, solo consumir los `.pkl`.
+- El `Scaler` no se exporta porque los datos ya están normalizados.
+- El estado `self.ready` en `RecommendKnn` evita errores si el objeto no está correctamente inicializado.

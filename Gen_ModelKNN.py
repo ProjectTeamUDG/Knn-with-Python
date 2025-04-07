@@ -6,10 +6,13 @@ import joblib
 
 class RecommendKnn:
     def __init__(self, raw_data, neighbors):
+        self.ready = True
         if raw_data is None:
+            self.ready = False
             print("Datos no encontrados")
             return
         #----------------------Strings para los serializados-------------------------
+        self.path = Path(__file__).parent / "SubSpace"
         self.modelName = "Modelo_KNN5"
         self.dataName = "Data"
         self.scalerName = "Scaler"
@@ -40,6 +43,8 @@ class RecommendKnn:
         print("\nDatos indexados")
 
     def recommend(self, article_id):
+        if not self.ready:
+            return
 
         if article_id not in self.data["CLAVE_ARTICULO"].values:
             print(f"\nArtículo {article_id} no encontrado en los datos.")
@@ -62,16 +67,21 @@ class RecommendKnn:
                 print(f"{i}. Artículo {similar_article} (Distancia: {distances[0][i]:.4f})")
 
     def export_model(self):
+        if not self.ready:
+            return
         extension = ".pkl"
-        joblib.dump( self.model, self.modelName+extension)
-        joblib.dump( self.data, self.dataName+extension)
+        Path(self.path).mkdir(parents=True, exist_ok=True)
+
+        joblib.dump( self.model, self.path/ f"{self.modelName+extension}")
+        joblib.dump( self.data, self.path/ f"{self.dataName+extension}")
         #Scaler comentado, pues ya esta escalada la informacion
-        #joblib.dump( self.scaler, self.scalerName+extension)
+        #joblib.dump( self.data, self.path/ f"{self.scalerName+extension}")
+
         print("\nModelo exportado a:",
-              "\n\t"+self.modelName+extension,
-              "\n\t"+self.dataName+extension,
-        #     "\n\t"+self.scalerName+extension,
-              "\nEsta informacion es necesaria para la API...")
+              f"\n\t{self.path / (self.modelName + extension)}",
+              f"\n\t{self.path / (self.dataName + extension)}",
+        #     "\n\t{+self.path/ f"{self.scalerName+extension}",
+              "\nEsta información es necesaria para la API...")
 
 def load_data(path, extension):
     if not Path(path + extension).exists():

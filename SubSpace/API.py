@@ -63,7 +63,8 @@ class Model:
 class ModeloKNN(BaseModel):
     clave_articulo: int
 
-model = Model("Modelo_KNN5", "Data")
+path = "../SubSpace/"
+model = Model(path+"Modelo_KNN5", path+"Data")
 app = FastAPI()
 
 @app.post("/recomendar")
